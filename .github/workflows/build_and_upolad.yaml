@@ -147,11 +147,8 @@ jobs:
               CXXFLAGS="-flto -O3 -pipe"
           CIBW_ENVIRONMENT_MACOS:
               MACOSX_DEPLOYMENT_TARGET=11
-              USE_OMP=True
-              CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-              CFLAGS="-flto -O3 -pipe -I/usr/local/opt/libomp/include -lcblas -lclapack -framework Accelerate -framework OpenCL"
-              CXXFLAGS="-flto -O3 -pipe -I/usr/local/opt/libomp/include -lcblas -lclapack -framework Accelerate -framework OpenCL"
-              LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+              CFLAGS="-flto -O3 -pipe  -lcblas -lclapack -framework Accelerate -framework OpenCL"
+              CXXFLAGS="-flto -O3 -pipe -lcblas -lclapack -framework Accelerate -framework OpenCL"
 
       - uses: actions/upload-artifact@v2
         with:
