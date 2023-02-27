@@ -24,25 +24,24 @@ def convert_response(response):
         from dimod.sampleset import SampleSet
     except ImportError:
         raise ImportError('Import dwave dimod : "pip install dimod"')
-    
-    if isinstance(response, Response) or isinstance(response, SampleSet):
-        from dimod.vartypes import BINARY, SPIN
-        vartype = 'BINARY' if response.vartype == BINARY else 'SPIN'
-        o_res = openjij.Response(vartype=vartype, indices=list(response.variables))
-        states = []
-        energies = []
-        for rec in response.record:
-            for _ in range(rec[2]):
-                states.append(rec[0])
-                energies.append(rec[1])
-        o_res.update_ising_states_energies(states=states, energies=energies)
-                
-        o_res.info = response.info
-        if 'qpu_sampling_time' in response.info:
-            o_res.info['sampling_time'] = response.info['qpu_sampling_time']
-        if 'anneal_time_per_run' in response.info:
-            o_res.info['execution_time'] = response.info['anneal_time_per_run']
-        o_res.info['dimod'] = response
-        return o_res
-    else:
+
+    if not isinstance(response, (Response, SampleSet)):
         raise TypeError('response is dimod.response.Response, SampleSet or openjij.Response')
+    from dimod.vartypes import BINARY, SPIN
+    vartype = 'BINARY' if response.vartype == BINARY else 'SPIN'
+    o_res = openjij.Response(vartype=vartype, indices=list(response.variables))
+    states = []
+    energies = []
+    for rec in response.record:
+        for _ in range(rec[2]):
+            states.append(rec[0])
+            energies.append(rec[1])
+    o_res.update_ising_states_energies(states=states, energies=energies)
+
+    o_res.info = response.info
+    if 'qpu_sampling_time' in response.info:
+        o_res.info['sampling_time'] = response.info['qpu_sampling_time']
+    if 'anneal_time_per_run' in response.info:
+        o_res.info['execution_time'] = response.info['anneal_time_per_run']
+    o_res.info['dimod'] = response
+    return o_res

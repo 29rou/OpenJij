@@ -89,7 +89,7 @@ class SASampler(BaseSampler):
 
         # schedule validation  0 <= beta
         beta = np.array(schedule).T[0]
-        if not np.all(0 <= beta):
+        if not np.all(beta >= 0):
             raise ValueError("schedule beta range is '0 <= beta'.")
 
         # convert to cxxjij.utility.ClassicalSchedule

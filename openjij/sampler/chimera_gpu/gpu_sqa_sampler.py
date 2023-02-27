@@ -102,15 +102,13 @@ class GPUChimeraSQASampler(SQASampler, BaseGPUChimeraSampler):
             >>> res = sampler.sample_ising(h, J)
         """
 
-        self.unit_num_L = unit_num_L if unit_num_L else self.unit_num_L
+        self.unit_num_L = unit_num_L or self.unit_num_L
 
         model = openjij.ChimeraModel(linear=h, quadratic=J, vartype='SPIN', 
                                    unit_num_L=self.unit_num_L, gpu=True)
 
         # define Chimera structure
-        structure = {}
-        structure['size'] = 8 * self.unit_num_L * self.unit_num_L
-        structure['dict'] = {}
+        structure = {'size': 8 * self.unit_num_L * self.unit_num_L, 'dict': {}}
         if isinstance(model.indices[0], int):
             # identity dict
             for ind in model.indices:

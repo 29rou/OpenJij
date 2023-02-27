@@ -46,9 +46,7 @@ class CSQASampler(SQASampler):
         }
 
     def _get_result(self, system, model):
-        info = {}
-        info['spin_config'] = system.spin_config
-
+        info = {'spin_config': system.spin_config}
         state = cxxjij.result.get_solution(system)
 
         return state, info
