@@ -103,7 +103,7 @@ class SQASampler(BaseSampler):
 
         # schedule validation  0 <= s <= 1
         sch = np.array(schedule).T[0]
-        if not np.all((0 <= sch) & (sch <= 1)):
+        if not np.all((sch >= 0) & (sch <= 1)):
             raise ValueError("schedule range is '0 <= s <= 1'.")
 
         # convert to list of cxxjij.utility.TransverseFieldSchedule
@@ -285,12 +285,14 @@ class SQASampler(BaseSampler):
 
 
 def make_qubo():
-    Q = {
-        (0, 0): 1, (1, 1): -1, (2, 2): 2,
-        (0, 1): 1, (1, 2): -1, (2, 0): -1
+    return {
+        (0, 0): 1,
+        (1, 1): -1,
+        (2, 2): 2,
+        (0, 1): 1,
+        (1, 2): -1,
+        (2, 0): -1,
     }
-    # solution is [0, 1, 0]
-    return Q
 
 
 def reverse_annealing():

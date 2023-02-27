@@ -21,15 +21,8 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
     Returns:
         generated KingGraph class
     """
-    mock_linear = {}
-    mock_quadratic = {}
-
-    if linear != None:
-        mock_linear = linear
-
-    if quadratic != None:
-        mock_quadratic = quadratic
-
+    mock_linear = linear if linear != None else {}
+    mock_quadratic = quadratic if quadratic != None else {}
     if mock_linear == {} and mock_quadratic == {}:
         # no elements in linear and quadratic
         # fetch first element of the king_graph
@@ -37,7 +30,9 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
         # add to linear
         mock_linear[label] = 1.0
 
-    class KingGraph(make_BinaryQuadraticModel(mock_linear, mock_quadratic)):
+
+
+    class KingGraph((make_BinaryQuadraticModel(mock_linear, mock_quadratic))):
         """
         BQM for king graph of HITACHI CMOS Annealer
         Attributes:
@@ -49,7 +44,7 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
                 Quadratic term [x1, y1, x2, y2, value]
                 Linear term    [x1, y1, x1, y1, value]
         """
-    
+
         def __init__(self, linear: dict=None, quadratic: dict=None, offset: float=0.0,
 
                 king_graph=None, vartype=openjij.SPIN, machine_type: str=''):
@@ -67,7 +62,7 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
                 machine_type (str): choose 'ASIC' or 'FPGA'
             """
             vartype = openjij.cast_vartype(vartype)
-    
+
             # set parameter ranges
             self.machine_type = machine_type
             if self.machine_type == "ASIC":
@@ -80,17 +75,17 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
                 self.prange = [-127, 127]
             else:
                 raise ValueError('machine type should be ASIC or FPGA')
-    
+
             # convert format h, J, Q and initilize BQM
             if king_graph is not None:
                 linear, quadratic = self._convert_to_BQM_format(
                     king_graph, vartype)
             super().__init__(linear, quadratic, offset=offset, vartype=vartype)
-    
+
             # reformat to ising king graph (which is Web API format)
             if king_graph is not None and vartype == openjij.SPIN:
                 self._ising_king_graph = king_graph
-    
+
             else:
                 # generate Ising h and J and create ising_king_graph format
                 lin, quad, _ = self.to_ising()
@@ -104,9 +99,9 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
                         x1, y1 = self._convert_to_xy(i)
                         x2, y2 = self._convert_to_xy(j)
                         self._ising_king_graph.append([x1, y1, x2, y2, J])
-    
+
             self._validation_ising_king_graph()
-    
+
         def _convert_to_BQM_format(self, king_graph, vartype):
             linear, quad = {}, {}
             for x1, y1, x2, y2, value in king_graph:
@@ -115,44 +110,52 @@ def make_KingGraph(linear=None, quadratic=None, king_graph=None):
                 else:
                     quad[(x1, y1), (x2, y2)] = value
             return linear, quad
-    
+
         def get_ising_king_graph(self):
             return self._ising_king_graph
-    
+
         def king_indices(self):
             if isinstance(self.indices[0], tuple):
                 return self.indices
             else:
                 return [self._convert_to_xy(i) for i in self.indices]
-    
+
         def _convert_to_xy(self, index):
             if isinstance(index, tuple):
                 return index[0], index[1]
-            else:
-                y = int(index / self.xrange[1])
-                return int(index - y * self.xrange[1]), y
-    
+            y = int(index / self.xrange[1])
+            return int(index - y * self.xrange[1]), y
+
         def convert_to_index(self, x, y):
             return y * self.xrange[1] + x
-    
+
         def _validation_ising_king_graph(self):
             for xi, yi, xj, yj, p in self._ising_king_graph:
                 if yi >= self.yrange[1] or yj >= self.yrange[1]:
-                    raise ValueError('Graph is incomplete xi: {}, yi: {}, xj: {}, yj: {}, p:{}'
-                                     .format(xi, yi, xj, yj, p))
-                if not (xi in [xj, xj-1, xj+1]) or not (yi in [yj, yj-1, yj+1]):
-                    raise ValueError('Graph is incomplete xi: {}, yi: {}, xj: {}, yj: {}, p:{}'
-                                     .format(xi, yi, xj, yj, p))
+                    raise ValueError(
+                        f'Graph is incomplete xi: {xi}, yi: {yi}, xj: {xj}, yj: {yj}, p:{p}'
+                    )
+                if xi not in [xj, xj - 1, xj + 1] or yi not in [
+                    yj,
+                    yj - 1,
+                    yj + 1,
+                ]:
+                    raise ValueError(
+                        f'Graph is incomplete xi: {xi}, yi: {yi}, xj: {xj}, yj: {yj}, p:{p}'
+                    )
                 if not (self.prange[0] <= p <= self.prange[1]):
-                    raise ValueError('Graph is incomplete xi: {}, yi: {}, xj: {}, yj: {}, p: {}'
-                                     .format(xi, yi, xj, yj, p))
-    
-    
+                    raise ValueError(
+                        f'Graph is incomplete xi: {xi}, yi: {yi}, xj: {xj}, yj: {yj}, p: {p}'
+                    )
+                        
+            
+
         def energy(self, sample):
             return super().energy(sample, sparse=True)
-    
+
         def energies(self, samples_like):
             return super().energies(sample_like, sparse=True)
+
 
     return KingGraph
 

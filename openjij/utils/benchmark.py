@@ -47,11 +47,10 @@ def solver_benchmark(solver, time_list, solutions=[], args={}, p_r=0.99, ref_ene
             
     """
 
-    if not measure_with_energy:
-        if solutions == []:
-            raise ValueError("need input 'solutions': (list(list))")
+    if not measure_with_energy and solutions == []:
+        raise ValueError("need input 'solutions': (list(list))")
 
-    logger.info('function ' + inspect.currentframe().f_code.co_name + ' start')
+    logger.info(f'function {inspect.currentframe().f_code.co_name} start')
 
     computation_times = []
     success_probabilities = []
@@ -140,23 +139,19 @@ def success_probability(response, solutions, ref_energy=0, measure_with_energy=F
     """
 
     if measure_with_energy:
-        suc_prob = np.count_nonzero(
-            np.array(response.energies) <= ref_energy)/len(response.energies)
+        return np.count_nonzero(
+            np.array(response.energies) <= ref_energy
+        ) / len(response.energies)
+    elif isinstance(solutions[0], dict):
+        sampled_states = response.samples()
+        return np.mean(
+            [1 if dict(state) in solutions else 0 for state in sampled_states]
+        )
     else:
-        if isinstance(solutions[0], dict):
-            sampled_states = response.samples()
-            suc_prob = np.mean([
-                1 if dict(state) in solutions else 0
-                for state in sampled_states
-            ])
-        else:
-            sampled_states = response.states
-            suc_prob = np.mean([
-                1 if list(state) in solutions else 0
-                for state in sampled_states
-            ])
-
-    return suc_prob
+        sampled_states = response.states
+        return np.mean(
+            [1 if list(state) in solutions else 0 for state in sampled_states]
+        )
 
 
 def se_success_probability(response, solutions, ref_energy=0, measure_with_energy=False):
@@ -173,23 +168,20 @@ def se_success_probability(response, solutions, ref_energy=0, measure_with_energ
     """
 
     if measure_with_energy:
-        se_suc_prob = np.sqrt(np.count_nonzero(
-            np.array(response.energies) <= ref_energy)/(len(response.energies)-1))
+        return np.sqrt(
+            np.count_nonzero(np.array(response.energies) <= ref_energy)
+            / (len(response.energies) - 1)
+        )
+    elif isinstance(solutions[0], dict):
+        sampled_states = response.samples()
+        return np.std(
+            [1 if dict(state) in solutions else 0 for state in sampled_states]
+        )
     else:
-        if isinstance(solutions[0], dict):
-            sampled_states = response.samples()
-            se_suc_prob = np.std([
-                1 if dict(state) in solutions else 0
-                for state in sampled_states
-            ])
-        else:
-            sampled_states = response.states
-            se_suc_prob = np.std([
-                1 if list(state) in solutions else 0
-                for state in sampled_states
-            ])
-
-    return se_suc_prob
+        sampled_states = response.states
+        return np.std(
+            [1 if list(state) in solutions else 0 for state in sampled_states]
+        )
 
 
 def time_to_solution(success_prob, computation_time, p_r):
@@ -203,13 +195,11 @@ def time_to_solution(success_prob, computation_time, p_r):
     """
 
     if success_prob == 1.0:
-        tts = 0.0
+        return 0.0
     elif success_prob == 0.0:
-        tts = np.inf
+        return np.inf
     else:
-        tts = computation_time * np.log(1 - p_r) / np.log(1-success_prob)
-
-    return tts
+        return computation_time * np.log(1 - p_r) / np.log(1-success_prob)
 
 
 def se_lower_tts(tts, success_prob, computation_time, p_r, se_success_prob):
@@ -222,17 +212,13 @@ def se_lower_tts(tts, success_prob, computation_time, p_r, se_success_prob):
         float: time to solution :math:`\\tau * \\log(1-pr)/\\log(1-ps)` 's standard error which pr is thereshold probability, ps is success probability and :math:`tau` is computation time.
     """
 
-    if 1 - (success_prob + se_success_prob) <= 0.0:
-        tts_low_error = 0.0
-    elif success_prob == 0.0:
+    if success_prob + se_success_prob >= 1 or success_prob == 0.0:
         tts_low_error = 0.0
     else:
         tts_low_error = computation_time * \
             np.log(1 - p_r) / np.log(1 - (success_prob + se_success_prob))
 
-    se_lower_tts = abs(tts_low_error - tts)
-
-    return se_lower_tts
+    return abs(tts_low_error - tts)
 
 
 def se_upper_tts(tts, success_prob, computation_time, p_r, se_success_prob):
@@ -245,14 +231,10 @@ def se_upper_tts(tts, success_prob, computation_time, p_r, se_success_prob):
         float: time to solution :math:`\\tau * \\log(1-pr)/\\log(1-ps)` 's standard error which pr is thereshold probability, ps is success probability and :math:`tau` is computation time.
     """
 
-    if success_prob == 1.0:
-        tts_up_error = 0.0
-    elif success_prob == 0.0:
+    if success_prob in [1.0, 0.0]:
         tts_up_error = 0.0
     else:
         tts_up_error = computation_time * \
             np.log(1 - p_r) / np.log(1 - (success_prob - se_success_prob))
 
-    se_upper_tts = abs(tts_up_error - tts)
-
-    return se_upper_tts
+    return abs(tts_up_error - tts)

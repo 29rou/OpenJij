@@ -98,15 +98,13 @@ class GPUChimeraSASampler(SASampler, BaseGPUChimeraSampler):
         """
         
 
-        self.unit_num_L = unit_num_L if unit_num_L else self.unit_num_L
+        self.unit_num_L = unit_num_L or self.unit_num_L
 
         model = openjij.ChimeraModel(linear=h, quadratic=J, vartype='SPIN', 
                                    unit_num_L=self.unit_num_L, gpu=True)
 
         # define Chimera structure
-        structure = {}
-        structure['size'] = 8 * self.unit_num_L * self.unit_num_L
-        structure['dict'] = {}
+        structure = {'size': 8 * self.unit_num_L * self.unit_num_L, 'dict': {}}
         if isinstance(model.indices[0], int):
             # identity dict
             for ind in model.indices:
@@ -115,7 +113,7 @@ class GPUChimeraSASampler(SASampler, BaseGPUChimeraSampler):
             # map chimera coordinate to index
             for ind in model.indices:
                 structure['dict'][ind] = model.to_index(*ind, self.unit_num_L)
-            
+
 
         return self._sampling(model, beta_min, beta_max,
                               num_sweeps, num_reads, schedule,

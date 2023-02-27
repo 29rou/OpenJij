@@ -77,7 +77,7 @@ class SQASampler(BaseSampler):
 
         # schedule validation  0 <= s <= 1
         sch = np.array(schedule).T[0]
-        if not np.all((0 <= sch) & (sch <= 1)):
+        if not np.all((sch >= 0) & (sch <= 1)):
             raise ValueError("schedule range is '0 <= s <= 1'.")
 
         if len(schedule[0]) == 2:
@@ -224,16 +224,16 @@ class SQASampler(BaseSampler):
                                     beta=None, gamma=None,
                                     num_sweeps=None,
                                     schedule=None):
-        self.beta = beta if beta else self.beta
-        self.gamma = gamma if gamma else self.gamma
+        self.beta = beta or self.beta
+        self.gamma = gamma or self.gamma
         if schedule or self.schedule:
             self._schedule = self._convert_validation_schedule(
-                schedule if schedule else self.schedule, self.beta
+                schedule or self.schedule, self.beta
             )
             self.schedule_info = {'schedule': 'custom schedule'}
         else:
 
-            self.num_sweeps = num_sweeps if num_sweeps else self.num_sweeps
+            self.num_sweeps = num_sweeps or self.num_sweeps
             self._schedule, beta_gamma = quartic_ising_schedule(
                 model=model,
                 beta=self._schedule_setting['beta'],

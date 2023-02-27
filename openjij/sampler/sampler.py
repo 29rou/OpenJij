@@ -168,24 +168,22 @@ class BaseSampler(dimod.Sampler):
                 h, J, offset = bqm.to_ising()
                 sampleset = self.sample_ising(h, J, **parameters)
                 sampleset.record.energy += offset
-                return sampleset
             else:
                 Q, offset = bqm.to_qubo()
                 sampleset = self.sample_qubo(Q, **parameters)
                 sampleset.change_vartype(dimod.SPIN, energy_offset=offset)
-                return sampleset
+            return sampleset
         elif bqm.vartype == openjij.BINARY:
             if not getattr(self.sample_qubo, '__issamplemixin__', False):
                 # sample_qubo is implemented
                 Q, offset = bqm.to_qubo()
                 sampleset = self.sample_qubo(Q, **parameters)
                 sampleset.record.energy += offset
-                return sampleset
             else:
                 h, J, offset = bqm.to_ising()
                 sampleset = self.sample_ising(h, J, **parameters)
                 sampleset.change_vartype(dimod.BINARY, energy_offset=offset)
-                return sampleset
+            return sampleset
         else:
             raise RuntimeError("binary quadratic model has an unknown vartype")
 

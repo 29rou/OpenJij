@@ -108,7 +108,7 @@ class SASampler(BaseSampler):
 
         # schedule validation  0 <= beta
         beta = np.array(schedule).T[0]
-        if not np.all(0 <= beta):
+        if not np.all(beta >= 0):
             raise ValueError("schedule beta range is '0 <= beta'.")
 
         # convert to cxxjij.utility.ClassicalSchedule
@@ -162,11 +162,7 @@ class SASampler(BaseSampler):
 
         _updater_name = updater.lower().replace('_', '').replace(' ', '')
         # swendsen wang algorithm runs only on sparse ising graphs.
-        if _updater_name == 'swendsenwang' or sparse:
-            sparse = True
-        else:
-            sparse = False
-
+        sparse = bool(_updater_name == 'swendsenwang' or sparse)
         if type(bqm) == dimod.BinaryQuadraticModel:
             bqm = openjij.BinaryQuadraticModel(dict(bqm.linear), dict(bqm.quadratic), bqm.offset, bqm.vartype, sparse=sparse)
 
@@ -188,9 +184,7 @@ class SASampler(BaseSampler):
 
         # set annealing schedule -------------------------------
         if schedule or self.schedule:
-            self._schedule = self._convert_validation_schedule(
-                schedule if schedule else self.schedule
-            )
+            self._schedule = self._convert_validation_schedule(schedule or self.schedule)
             self.schedule_info = {'schedule': 'custom schedule'}
         else:
             self._schedule, beta_range = geometric_ising_beta_schedule(
@@ -308,9 +302,9 @@ class SASampler(BaseSampler):
             _init_state = np.array(initial_state)
             def _generate_init_state(): return _init_state
         # -------------------------------- make init state generator
-        
+
         sa_system = self._make_system['singlespinflippolynomial'](_generate_init_state(), model.to_serializable())
-        
+
         self._setting_overwrite(
             beta_min=beta_min, beta_max=beta_max,
             num_sweeps=num_sweeps, num_reads=num_reads
@@ -318,9 +312,7 @@ class SASampler(BaseSampler):
 
         # set annealing schedule -------------------------------
         if schedule or self.schedule:
-            self._schedule = self._convert_validation_schedule(
-                schedule if schedule else self.schedule
-            )
+            self._schedule = self._convert_validation_schedule(schedule or self.schedule)
             self.schedule_info = {'schedule': 'custom schedule'}
         else:
             self._schedule, beta_range = geometric_hubo_beta_schedule(
